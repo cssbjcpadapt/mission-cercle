@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mission Cercle : Opération π — Quiz (2e secondaire)</title>
+  <style>
+    :root {
+      --glass: rgba(255,255,255,0.90);
+      --glass2: rgba(255,255,255,0.78);
+      --text: #0b1220;
+      --muted: #334155;
+      --accent: #2563eb;
+      --good: #16a34a;
+      --bad: #dc2626;
+      --cardShadow: 0 18px 40px rgba(0,0,0,.25);
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text);
+      background: #07101d url("arriere_plan_math_cercle.png") center/cover no-repeat fixed;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+    }
+    .wrap {
+      width: min(980px, 100%);
+      background: var(--glass);
+      border-radius: var(--radius);
+      box-shadow: var(--cardShadow);
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.25);
+      backdrop-filter: blur(10px);
+    }
+    header {
+      padding: 18px 18px 12px 18px;
+      background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.70));
+      border-bottom: 1px solid rgba(15,23,42,.10);
+    }
+    .topRow {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+    .title {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .title h1 {
+      margin: 0;
+      font-size: clamp(18px, 2.2vw, 26px);
+      letter-spacing: .2px;
+    }
+    .title .sub {
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .hud {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      align-items: center;
+    }
+    .pill {
+      background: rgba(15,23,42,.06);
+      border: 1px solid rgba(15,23,42,.10);
+      padding: 8px 10px;
+      border-radius: 999px;
+      font-size: 13px;
+      color: #0f172a;
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      white-space: nowrap;
+    }
+    .pill b { font-weight: 800; }
+    .progress {
+      padding: 10px 18px 16px 18px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .seg {
+      height: 10px;
+      width: 18px;
+      border-radius: 999px;
+      background: rgba(15,23,42,.12);
+      border: 1px solid rgba(255,255,255,.22);
+      position: relative;
+      overflow: hidden;
+    }
+    .seg.current::after {
+      content: "";
+      position: absolute;
+      inset: -2px;
+      border: 2px solid rgba(37,99,235,.9);
+      border-radius: 999px;
+    }
+    .seg.good { background: rgba(22,163,74,.85); }
+    .seg.bad { background: rgba(220,38,38,.85); }
+    main { padding: 18px; }
+    .card {
+      background: var(--glass2);
+      border: 1px solid rgba(15,23,42,.10);
+      border-radius: var(--radius);
+      padding: 16px;
+    }
+    .qHead {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .qNum {
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .qText {
+      margin: 6px 0 0 0;
+      font-size: clamp(16px, 2.1vw, 20px);
+      line-height: 1.25;
+      font-weight: 750;
+    }
+    .hintBox {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px dashed rgba(37,99,235,.35);
+      background: rgba(37,99,235,.08);
+      color: #0b255a;
+      font-size: 14px;
+      display: none;
+    }
+    .answers {
+      margin-top: 14px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+    .btn {
+      border: 0;
+      border-radius: 14px;
+      padding: 12px 12px;
+      text-align: left;
+      font-size: 15px;
+      cursor: pointer;
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(15,23,42,.12);
+      transition: transform .06s ease, box-shadow .06s ease;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn:disabled {
+      cursor: not-allowed;
+      opacity: .75;
+      transform: none;
+    }
+    .btn.good { border-color: rgba(22,163,74,.55); box-shadow: 0 0 0 3px rgba(22,163,74,.12); }
+    .btn.bad { border-color: rgba(220,38,38,.55); box-shadow: 0 0 0 3px rgba(220,38,38,.12); }
+    .feedback {
+      margin-top: 12px;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(15,23,42,.10);
+      background: rgba(255,255,255,.92);
+      display: none;
+      font-size: 14px;
+      line-height: 1.35;
+    }
+    .info {
+      margin-top: 10px;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(15,23,42,.10);
+      background: rgba(255,255,255,.92);
+      display: none;
+      font-size: 14px;
+      line-height: 1.35;
+    }
+    .controls {
+      margin-top: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .leftControls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .action {
+      border: 0;
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      background: rgba(15,23,42,.08);
+      border: 1px solid rgba(15,23,42,.12);
+    }
+    .action.primary {
+      background: rgba(37,99,235,.92);
+      border-color: rgba(37,99,235,.92);
+      color: white;
+    }
+    .action.primary:disabled {
+      background: rgba(37,99,235,.35);
+      border-color: rgba(37,99,235,.35);
+      cursor: not-allowed;
+    }
+    .fs {
+      position: fixed;
+      top: 14px;
+      right: 14px;
+      display: flex;
+      gap: 10px;
+      z-index: 9999;
+    }
+    .fs button {
+      border: 0;
+      border-radius: 999px;
+      padding: 10px 12px;
+      font-weight: 800;
+      cursor: pointer;
+      background: rgba(255,255,255,.88);
+      border: 1px solid rgba(15,23,42,.14);
+      backdrop-filter: blur(8px);
+    }
+    .start { padding: 22px; }
+    .modeGrid {
+      margin-top: 14px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .modeCard {
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(15,23,42,.12);
+      border-radius: var(--radius);
+      padding: 14px;
+    }
+    .modeCard h3 { margin: 0 0 6px 0; }
+    .modeCard p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.3; }
+    .modeCard button { margin-top: 12px; width: 100%; }
+    .results { padding: 22px; }
+    .resultBox {
+      margin-top: 14px;
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(15,23,42,.12);
+      border-radius: var(--radius);
+      padding: 14px;
+    }
+    .mistakes {
+      margin-top: 12px;
+      display: grid;
+      gap: 10px;
+    }
+    .mistake {
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(15,23,42,.12);
+      border-radius: var(--radius);
+      padding: 12px;
+    }
+    .mistake .meta { color: var(--muted); font-size: 13px; }
+    .mistake .qt { margin: 6px 0; font-weight: 800; }
+    .mistake .lines { font-size: 14px; line-height: 1.35; }
+    .footerBtns {
+      margin-top: 14px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    @media (max-width: 720px) {
+      .modeGrid { grid-template-columns: 1fr; }
+      .seg { width: 14px; }
+      .fs { right: 10px; top: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="fs">
+    <button id="btnEnterFs" title="Plein écran">⛶ Plein écran</button>
+    <button id="btnExitFs" title="Quitter" style="display:none;">🞬 Quitter</button>
+  </div>
+
+  <div class="wrap" role="application" aria-label="Quiz mathématiques">
+    <header>
+      <div class="topRow">
+        <div class="title">
+          <h1>Mission Cercle : Opération π</h1>
+          <div class="sub">Mathématiques — 2e secondaire • Cercle, circonférence, aire, π</div>
+        </div>
+        <div class="hud" id="hud" style="display:none;">
+          <div class="pill">Bonnes réponses : <b id="goodCount">0</b></div>
+          <div class="pill">Tentatives : <b id="tryCount">0</b></div>
+          <div class="pill">Mode : <b id="modeLabel">—</b></div>
+        </div>
+      </div>
+      <div class="progress" id="progress" style="display:none;"></div>
+    </header>
+
+    <main>
+      <section id="start" class="start card">
+        <div style="font-size:14px;color:var(--muted);">Choisis ton mode :</div>
+        <h2 style="margin:6px 0 0 0;">Deux versions (Option C)</h2>
+        <div class="modeGrid">
+          <div class="modeCard">
+            <h3>🧭 Version Révision (guidée)</h3>
+            <p>Questions progressives avec indices utiles, pour consolider les bases : vocabulaire, formules, unités et calculs simples.</p>
+            <button class="action primary" id="btnStartRev">Démarrer — Révision</button>
+          </div>
+          <div class="modeCard">
+            <h3>🏁 Version Évaluation formative (plus exigeante)</h3>
+            <p>Questions plus complexes : choix de formules, calculs avec valeurs approchées, raisonnement (rayon/diamètre/aire).</p>
+            <button class="action primary" id="btnStartEval">Démarrer — Évaluation</button>
+          </div>
+        </div>
+        <div style="margin-top:14px;font-size:13px;color:var(--muted);">
+          Règle : une question compte comme « bonne » seulement si elle est réussie <b>du premier coup</b>.
+        </div>
+      </section>
+
+      <section id="quiz" style="display:none;">
+        <div class="card">
+          <div class="qHead">
+            <div>
+              <div class="qNum" id="qNum">Question</div>
+              <div class="qText" id="qText">—</div>
+            </div>
+          </div>
+
+          <div class="hintBox" id="hintBox"></div>
+
+          <div class="answers" id="answers"></div>
+
+          <div class="feedback" id="feedback"></div>
+          <div class="info" id="info"></div>
+
+          <div class="controls">
+            <div class="leftControls">
+              <button class="action" id="btnHint">Indice</button>
+              <button class="action" id="btnRestart">Recommencer</button>
+            </div>
+            <button class="action primary" id="btnNext" disabled>Passer ➜</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="results" class="results" style="display:none;">
+        <div class="card">
+          <h2 style="margin:0;">Résultats</h2>
+          <div class="resultBox">
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <div class="pill">Bonnes réponses : <b id="goodFinal">0</b> / <span id="totalQ">0</span></div>
+              <div class="pill">Tentatives : <b id="triesFinal">0</b></div>
+              <div class="pill">Mode : <b id="modeFinal">—</b></div>
+            </div>
+            <div style="margin-top:10px;color:var(--muted);font-size:14px;">
+              Les segments <span style="color:var(--good);font-weight:800;">verts</span> indiquent les questions réussies du premier coup.
+              Les segments <span style="color:var(--bad);font-weight:800;">rouges</span> indiquent une réussite après au moins une erreur.
+            </div>
+          </div>
+
+          <h3 style="margin:16px 0 8px 0;">Rétroactions des tentatives non réussies du premier coup</h3>
+          <div id="mistakes" class="mistakes"></div>
+
+          <div class="footerBtns">
+            <button class="action" id="btnCopy">Copier le rapport</button>
+            <button class="action primary" id="btnBackHome">Retour au choix du mode</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+<script>
+const DATA = {"title": "Mission Cercle : Opération π", "modes": {"revision": [{"q": "Quelle définition correspond à un **cercle**?", "choices": ["Une courbe fermée dont tous les points sont à égale distance du centre", "La région intérieure d’un cercle (incluant le cercle)", "Un segment qui relie deux points du cercle", "Une corde qui passe par le centre"], "correct": 0, "fb": ["✅ Oui : un cercle est une **courbe** (le contour) formée de points à égale distance du centre.", "❌ Ça décrit plutôt un **disque** (la surface).", "❌ Ça décrit une **corde**.", "❌ Ça décrit un **diamètre**."], "hint": "Indice : pense au **contour** du cercle, pas à la surface.", "info": "Un **cercle** est le *contour* : ensemble des points situés à égale distance d’un **centre**. Le **disque**, lui, correspond à la surface à l’intérieur du cercle."}, {"q": "Qu’est-ce qu’un **disque**?", "choices": ["Le contour seulement", "La surface à l’intérieur du cercle (incluant le contour)", "Un segment du centre au cercle", "La plus longue corde"], "correct": 1, "fb": ["❌ Ça, c’est le **cercle** (le contour).", "✅ Exact : un disque est la **région** délimitée par le cercle.", "❌ Ça, c’est un **rayon**.", "❌ Ça, c’est un **diamètre**."], "hint": "Indice : pense à une **pizza entière** plutôt qu’au bord de la pizza.", "info": "L’aire d’un **disque** mesure la *surface* délimitée par un cercle. On l’exprime en **unités carrées** (cm², m², etc.)."}, {"q": "Qu’est-ce qu’un **rayon**?", "choices": ["Segment reliant deux points du cercle", "Segment reliant le centre à un point du cercle", "Corde passant par le centre", "Longueur du cercle"], "correct": 1, "fb": ["❌ Ça, c’est une **corde**.", "✅ Oui : un rayon relie le **centre** à un point du cercle.", "❌ Ça, c’est un **diamètre**.", "❌ Ça, c’est la **circonférence** (périmètre)."], "hint": "Indice : le mot rayon te rappelle une ligne qui **part du centre**.", "info": "Dans un cercle, tous les **rayons** ont la même longueur (ils sont isométriques). Le rayon est noté souvent **r**."}, {"q": "Quelle phrase décrit le mieux un **diamètre**?", "choices": ["Segment du centre au cercle", "Segment reliant deux points du cercle", "Corde qui passe par le centre", "Valeur de π"], "correct": 2, "fb": ["❌ Ça, c’est un **rayon**.", "❌ Ça, c’est une **corde** (pas forcément par le centre).", "✅ Exact : un diamètre est une corde qui **passe par le centre**.", "❌ π est un nombre, pas un segment."], "hint": "Indice : le diamètre traverse le cercle en passant par le **milieu**.", "info": "Le **diamètre** est la plus longue corde d’un cercle. Sa longueur vaut **deux fois** celle du rayon : d = 2r."}, {"q": "Quelle relation est correcte entre le diamètre **d** et le rayon **r**?", "choices": ["d = r/2", "d = 2r", "r = 2d", "r = d"], "correct": 1, "fb": ["❌ Si d = r/2, le diamètre serait plus petit que le rayon.", "✅ Oui : le diamètre vaut **deux fois** le rayon.", "❌ r = 2d inverse la relation.", "❌ r = d n’est pas vrai (sauf r=0)."], "hint": "Indice : le diamètre traverse le cercle complet; le rayon n’en fait que la moitié.", "info": "On retient : **d = 2r** et **r = d/2**. C’est essentiel pour choisir la bonne formule."}, {"q": "Une **corde**, c’est…", "choices": ["Segment du centre au cercle", "Segment reliant deux points du cercle", "Corde passant par le centre", "Contour du cercle"], "correct": 1, "fb": ["❌ Ça, c’est un **rayon**.", "✅ Oui : une corde relie **deux points du cercle**.", "❌ Ça, c’est un **diamètre**.", "❌ Ça, c’est le **cercle**."], "hint": "Indice : une corde relie deux points du **contour**.", "info": "Le **diamètre** est une corde particulière : il passe par le centre et c’est la **plus longue** corde."}, {"q": "La **circonférence** d’un cercle correspond à…", "choices": ["La surface du disque", "Le périmètre du cercle", "La longueur d’un rayon", "Le double du diamètre"], "correct": 1, "fb": ["❌ La surface, c’est l’**aire**.", "✅ Exact : c’est la **longueur du contour** (le périmètre).", "❌ Un rayon est un segment, pas la longueur du contour.", "❌ Le double du diamètre n’est pas une définition."], "hint": "Indice : circonférence = **tour complet** du cercle.", "info": "La circonférence se note **C** et se mesure en unités de longueur (cm, m…)."}, {"q": "Quelle formule permet de calculer la circonférence C à partir du rayon r?", "choices": ["C = πr²", "C = 2πr", "C = πr", "C = 2r"], "correct": 1, "fb": ["❌ πr² est une **aire**.", "✅ Oui : **C = 2πr**.", "❌ πr oublie le facteur 2.", "❌ 2r est le **diamètre**."], "hint": "Indice : avec le rayon, la circonférence contient **2π**.", "info": "Deux formules : **C = 2πr** ou **C = πd**. Choisis selon la donnée."}, {"q": "Quelle formule permet de calculer la circonférence C à partir du diamètre d?", "choices": ["C = πd", "C = 2πd", "C = πd²", "C = d/π"], "correct": 0, "fb": ["✅ Exact : **C = πd**.", "❌ 2πd est trop grand.", "❌ πd² n’est pas une circonférence.", "❌ d/π sert à trouver d si on connaît C."], "hint": "Indice : avec le diamètre, c’est simplement π × d.", "info": "Comme d = 2r, **C = πd** et **C = 2πr** sont équivalentes."}, {"q": "Quelle égalité exprime le rapport constant entre circonférence et diamètre?", "choices": ["π = C/d", "π = d/C", "π = C/2r²", "π = r/C"], "correct": 0, "fb": ["✅ Oui : π = C/d.", "❌ Tu as inversé le rapport.", "❌ 2r² n’a pas de lien ici.", "❌ r/C n’est pas constant."], "hint": "Indice : pense “circonférence ÷ diamètre”.", "info": "On obtient toujours **π** quand on divise la circonférence par le diamètre : π = C/d. Aussi : π = C/(2r)."}, {"q": "Un cercle a un rayon de 6 cm. Quelle est sa circonférence **exacte**?", "choices": ["12π cm", "36π cm", "6π cm", "3π cm"], "correct": 0, "fb": ["✅ Exact : C = 2π×6 = **12π cm**.", "❌ 36π est trop grand.", "❌ 6π oublie le facteur 2.", "❌ 3π est trop petit."], "hint": "Indice : C = 2πr et r = 6.", "info": "C = 2πr. Avec r = 6 cm → C = 12π cm (≈ 37,7 cm si π≈3,14)."}, {"q": "Un cercle a un diamètre de 10 m. Quelle est sa circonférence **exacte**?", "choices": ["10π m", "5π m", "20π m", "100π m"], "correct": 0, "fb": ["✅ Oui : C = π×10 = **10π m**.", "❌ 5π serait si d=5.", "❌ 20π confond avec 2πd.", "❌ 100π est une erreur de puissance."], "hint": "Indice : C = πd.", "info": "C = πd. Avec d=10 m → C = 10π m (≈ 31,4 m si π≈3,14)."}, {"q": "Si on connaît la circonférence C, comment trouver le rayon r?", "choices": ["r = C/π", "r = C/(2π)", "r = 2π/C", "r = π/C"], "correct": 1, "fb": ["❌ C/π donne le diamètre.", "✅ Exact : r = C/(2π).", "❌ 2π/C inverse la relation.", "❌ π/C n’est pas correct."], "hint": "Indice : pars de C = 2πr et isole r.", "info": "À partir de C = 2πr, on divise par 2π : **r = C/(2π)**."}, {"q": "Si on connaît la circonférence C, comment trouver le diamètre d?", "choices": ["d = C/π", "d = C/(2π)", "d = π/C", "d = 2C/π"], "correct": 0, "fb": ["✅ Oui : d = C/π.", "❌ C/(2π) donne le rayon.", "❌ π/C inverse le rapport.", "❌ 2C/π donnerait 2d."], "hint": "Indice : pars de C = πd.", "info": "À partir de C = πd, on obtient **d = C/π**. Ensuite r = d/2."}, {"q": "Quelle formule donne l’aire A d’un disque de rayon r?", "choices": ["A = 2πr", "A = πr²", "A = πd", "A = 2r²"], "correct": 1, "fb": ["❌ 2πr est une circonférence.", "✅ Exact : **A = πr²**.", "❌ πd est une circonférence.", "❌ 2r² n’inclut pas π."], "hint": "Indice : l’aire implique un **carré** (r²).", "info": "L’aire d’un disque se mesure en unités carrées. Formule : **A = πr²**."}, {"q": "Un disque a un rayon de 5 cm. Quelle est son aire **exacte**?", "choices": ["25π cm²", "10π cm²", "5π cm²", "50π cm²"], "correct": 0, "fb": ["✅ Oui : A = π×5² = **25π cm²**.", "❌ 10π oublie le carré.", "❌ 5π oublie le carré.", "❌ 50π multiplie par 2 sans raison."], "hint": "Indice : calcule d’abord 5².", "info": "A = πr². r=5 → r²=25 → A = 25π cm² (≈ 78,5 cm² si π≈3,14)."}, {"q": "Quelles unités sont correctes?", "choices": ["C en cm² et A en cm", "C en cm et A en cm²", "C en cm³ et A en cm²", "C en cm et A en cm"], "correct": 1, "fb": ["❌ Tu as inversé.", "✅ Exact : C est une longueur; A est une surface.", "❌ cm³ est une unité de volume.", "❌ A n’est pas une longueur."], "hint": "Indice : périmètre = longueur; aire = surface.", "info": "Circonférence → unités de longueur. Aire → unités carrées (cm², m²…)."}, {"q": "Quelle valeur approchée de π utilise-t-on souvent au secondaire?", "choices": ["π ≈ 0,314", "π ≈ 3,14", "π ≈ 31,4", "π ≈ 1,34"], "correct": 1, "fb": ["❌ 0,314 est 10× trop petit.", "✅ Oui : π ≈ 3,14 (ou 3,1416).", "❌ 31,4 est 10× trop grand.", "❌ 1,34 est incorrect."], "hint": "Indice : π est un peu plus grand que 3.", "info": "π est irrationnel (décimales infinies sans période). On utilise souvent 3,14 ou 3,1416."}, {"q": "Dans un cercle, combien de rayons différents peut-on tracer?", "choices": ["Un seul", "Deux", "Une infinité", "Dix"], "correct": 2, "fb": ["❌ On peut en tracer autant qu’on veut.", "❌ Deux est trop petit.", "✅ Oui : on peut tracer une infinité de rayons.", "❌ Dix n’est pas une limite."], "hint": "Indice : il y a une infinité de points sur un cercle.", "info": "Chaque point du cercle peut être relié au centre : cela donne une **infinité** de rayons, tous de même longueur."}, {"q": "Dans un cercle, que peut-on dire des diamètres?", "choices": ["Tous les diamètres ont la même longueur", "Les diamètres ont toujours des longueurs différentes", "Le diamètre est plus court que le rayon", "Le diamètre ne passe jamais par le centre"], "correct": 0, "fb": ["✅ Exact : tous les diamètres d’un même cercle sont isométriques.", "❌ Faux : ils ont tous la même longueur.", "❌ Faux : d = 2r donc d > r.", "❌ Faux : un diamètre passe par le centre."], "hint": "Indice : dans un cercle donné, r est unique, donc d aussi.", "info": "Comme tous les rayons sont égaux, et d = 2r, tous les diamètres d’un même cercle ont la même longueur."}], "evaluation": [{"q": "Quelle affirmation est vraie?", "choices": ["Le cercle est la surface, le disque est le contour", "Le cercle est le contour, le disque est la surface", "Cercle et disque sont identiques", "Le disque est une corde"], "correct": 1, "fb": ["❌ Inversé.", "✅ Correct : cercle = contour; disque = surface.", "❌ Non : ils sont liés mais différents.", "❌ Non : une corde est un segment."], "hint": "Indice : bord vs surface.", "info": "**Cercle** : contour. **Disque** : surface délimitée par le cercle."}, {"q": "On connaît le **diamètre** d’un cercle et on veut sa circonférence. Quelle formule choisit-on?", "choices": ["A = πr²", "C = 2πr", "C = πd", "d = 2r"], "correct": 2, "fb": ["❌ A = πr² est une aire.", "❌ C = 2πr demande r.", "✅ Oui : si tu connais d, la formule directe est C = πd.", "❌ d = 2r relie d et r, mais ne calcule pas C."], "hint": "Indice : cherche une formule avec d et C.", "info": "Si le diamètre est connu, la circonférence se calcule par **C = πd**."}, {"q": "Un cercle a un diamètre de 6 cm. En prenant π ≈ 3,14, quelle est sa circonférence?", "choices": ["C ≈ 18,84 cm", "C ≈ 9,42 cm", "C ≈ 6,28 cm", "C ≈ 37,68 cm"], "correct": 0, "fb": ["✅ Oui : C ≈ 3,14×6 = 18,84 cm.", "❌ Tu as divisé au lieu de multiplier.", "❌ Cette valeur correspond à 2π avec r=1.", "❌ Tu as multiplié par 12."], "hint": "Indice : calcule 3,14 × 6.", "info": "C = πd. Avec d=6 cm → C ≈ 18,84 cm."}, {"q": "Un cercle a une circonférence de 25,12 cm (π ≈ 3,14). Quel est son rayon?", "choices": ["r ≈ 4 cm", "r ≈ 8 cm", "r ≈ 2 cm", "r ≈ 12,56 cm"], "correct": 0, "fb": ["✅ Oui : r = C/(2π) ≈ 25,12/6,28 ≈ 4 cm.", "❌ 8 cm est le diamètre.", "❌ 2 cm donnerait C≈12,56 cm.", "❌ 12,56 cm confond avec π×4."], "hint": "Indice : calcule d = C/π puis r = d/2.", "info": "d = C/π ≈ 8 cm, donc r = 4 cm."}, {"q": "Un disque a un diamètre de 12 cm. Quelle est son aire exacte?", "choices": ["A = 36π cm²", "A = 18π cm²", "A = 9π cm²", "A = 12π cm²"], "correct": 0, "fb": ["✅ Oui : r=6, donc A = π×6² = 36π cm².", "❌ Erreur sur le rayon ou sur le carré.", "❌ Correspond à r=3.", "❌ Ne correspond pas à A = πr²."], "hint": "Indice : commence par r = d/2.", "info": "Si d=12, r=6. Aire : A = πr² = 36π cm²."}, {"q": "Laquelle est vraie?", "choices": ["Toute corde est un diamètre", "Tout diamètre est une corde", "Une corde passe toujours par le centre", "Le diamètre n’est pas une corde"], "correct": 1, "fb": ["❌ Faux : une corde ne passe pas toujours par le centre.", "✅ Exact : un diamètre est un cas particulier de corde.", "❌ Faux : seulement le diamètre passe par le centre.", "❌ Faux : le diamètre est une corde."], "hint": "Indice : “diamètre = corde spéciale”.", "info": "Une corde relie deux points du cercle. Le diamètre est une corde qui passe par le centre."}, {"q": "À propos de π, quelle phrase est correcte?", "choices": ["π est rationnel car on peut l’écrire 22/7 exactement", "π est irrationnel : ses décimales ne se terminent pas et ne se répètent pas", "π vaut exactement 3,14", "π est un entier"], "correct": 1, "fb": ["❌ 22/7 est une approximation.", "✅ Oui : π est irrationnel.", "❌ 3,14 est une approximation.", "❌ π n’est pas un entier."], "hint": "Indice : irrationnel = pas d’écriture décimale finie ni périodique.", "info": "π est irrationnel. On utilise des approximations (3,14; 3,1416; 22/7) pour calculer."}, {"q": "Quelle affirmation sur les unités est correcte?", "choices": ["La circonférence mesure une surface", "L’aire mesure une longueur", "La circonférence se mesure en unités de longueur", "L’aire se mesure en unités de longueur"], "correct": 2, "fb": ["❌ Non : une surface correspond à une aire.", "❌ Non : l’aire se mesure en unités carrées.", "✅ Oui : la circonférence est une longueur.", "❌ Non : l’aire n’est pas une longueur."], "hint": "Indice : périmètre = longueur.", "info": "Circonférence → longueur. Aire → unités carrées."}, {"q": "Un disque a une aire de 49π cm². Quel est son rayon?", "choices": ["r = 7 cm", "r = 49 cm", "r = √49 cm", "r = 14 cm"], "correct": 0, "fb": ["✅ Oui : r² = 49 → r = 7 cm.", "❌ 49 cm est r², pas r.", "❌ √49 = 7 : c’est vrai, mais la forme simple est 7 cm.", "❌ 14 cm donnerait 196π."], "hint": "Indice : divise par π puis prends la racine carrée.", "info": "A = πr² → r² = A/π = 49 → r = 7."}, {"q": "Si on te demande une circonférence **exacte** pour d = 10 cm, quelle réponse est la meilleure?", "choices": ["Garder 10π cm", "Écrire 31,4 cm", "Écrire 3,14 cm", "Écrire 10 cm"], "correct": 0, "fb": ["✅ Oui : 10π cm est exact.", "❌ 31,4 cm est une approximation.", "❌ 3,14 cm ne tient pas compte du diamètre.", "❌ 10 cm est le diamètre, pas la circonférence."], "hint": "Indice : “exact” = garder π.", "info": "Exact → garder π. Approximation → remplacer π par 3,14 ou 3,1416."}, {"q": "Quelle affirmation est vraie dans un cercle?", "choices": ["Le rayon est la plus longue corde", "Le diamètre est la plus longue corde", "Une corde est toujours plus longue qu’un diamètre", "Le diamètre est plus court qu’un rayon"], "correct": 1, "fb": ["❌ Le rayon n’est pas une corde.", "✅ Oui : le diamètre est la plus longue corde.", "❌ Aucune corde n’est plus longue que le diamètre.", "❌ d = 2r, donc d > r."], "hint": "Indice : d = 2r.", "info": "Le diamètre traverse le cercle en passant par le centre : c’est la corde maximale."}, {"q": "Un disque a un rayon de 8 m. Quelle est son aire exacte?", "choices": ["16π m²", "64π m²", "8π m²", "128π m²"], "correct": 1, "fb": ["❌ 16π correspond à r=4.", "✅ A = π×8² = **64π m²**.", "❌ 8π oublie le carré.", "❌ 128π multiplie par 2 sans raison."], "hint": "Indice : r² = 8².", "info": "A = πr². r=8 → A = 64π m²."}, {"q": "Un cercle a une circonférence de 31,4 m (π≈3,14). Quel est son diamètre?", "choices": ["10 m", "5 m", "20 m", "31,4 m"], "correct": 0, "fb": ["✅ d = C/π ≈ 10 m.", "❌ 5 m est le rayon si d=10.", "❌ 20 m serait si C≈62,8.", "❌ 31,4 m confond circonférence et diamètre."], "hint": "Indice : d = C/π.", "info": "À partir de C = πd, on obtient d = C/π. Ici : 31,4/3,14 = 10."}, {"q": "Quelle formule permet de trouver le rayon r à partir du diamètre d?", "choices": ["r = 2d", "r = d/2", "r = d²", "r = πd"], "correct": 1, "fb": ["❌ 2d rendrait r > d.", "✅ Oui : r = d/2.", "❌ d² change les unités.", "❌ πd sert à la circonférence."], "hint": "Indice : le rayon est la moitié du diamètre.", "info": "d = 2r → r = d/2."}, {"q": "Un cercle a un rayon de 3,5 dm. Avec π≈3,14, quelle est sa circonférence?", "choices": ["≈ 10,99 dm", "≈ 21,98 dm", "≈ 7,00 dm", "≈ 3,14 dm"], "correct": 1, "fb": ["❌ Il manque le facteur 2.", "✅ C = 2πr ≈ 6,28×3,5 = **21,98 dm**.", "❌ 7,00 dm est le diamètre, pas C.", "❌ π seul n’est pas une circonférence."], "hint": "Indice : calcule 2π ≈ 6,28.", "info": "C = 2πr. 2π≈6,28; 6,28×3,5≈21,98."}, {"q": "Un disque a une aire de 100π mm². Quel est son rayon?", "choices": ["10 mm", "100 mm", "50 mm", "5 mm"], "correct": 0, "fb": ["✅ r²=100 → r=10 mm.", "❌ 100 mm est r².", "❌ 50 mm ne convient pas.", "❌ 5 mm donnerait 25π."], "hint": "Indice : r = √(A/π).", "info": "A=πr² → r²=100 → r=10."}, {"q": "Pour un cercle, quel rapport donne toujours π?", "choices": ["C ÷ r", "C ÷ d", "d ÷ C", "r ÷ C"], "correct": 1, "fb": ["❌ C/r vaut 2π.", "✅ C/d vaut π.", "❌ d/C vaut 1/π.", "❌ r/C dépend du cercle."], "hint": "Indice : π = C/d.", "info": "Le rapport **circonférence ÷ diamètre** est constant et vaut π."}, {"q": "Pour un cercle, quel rapport donne toujours π?", "choices": ["C ÷ r", "C ÷ d", "d ÷ C", "r ÷ C"], "correct": 1, "fb": ["❌ C/r vaut 2π.", "✅ C/d vaut π.", "❌ d/C vaut 1/π.", "❌ r/C dépend du cercle."], "hint": "Indice : π = C/d.", "info": "Le rapport **circonférence ÷ diamètre** est constant et vaut π."}, {"q": "Pour un cercle, quel rapport donne toujours π?", "choices": ["C ÷ r", "C ÷ d", "d ÷ C", "r ÷ C"], "correct": 1, "fb": ["❌ C/r vaut 2π.", "✅ C/d vaut π.", "❌ d/C vaut 1/π.", "❌ r/C dépend du cercle."], "hint": "Indice : π = C/d.", "info": "Le rapport **circonférence ÷ diamètre** est constant et vaut π."}, {"q": "Pour un cercle, quel rapport donne toujours π?", "choices": ["C ÷ r", "C ÷ d", "d ÷ C", "r ÷ C"], "correct": 1, "fb": ["❌ C/r vaut 2π.", "✅ C/d vaut π.", "❌ d/C vaut 1/π.", "❌ r/C dépend du cercle."], "hint": "Indice : π = C/d.", "info": "Le rapport **circonférence ÷ diamètre** est constant et vaut π."}]}};
+
+const els = {
+  start: document.getElementById('start'),
+  quiz: document.getElementById('quiz'),
+  results: document.getElementById('results'),
+  hud: document.getElementById('hud'),
+  progress: document.getElementById('progress'),
+  modeLabel: document.getElementById('modeLabel'),
+  qNum: document.getElementById('qNum'),
+  qText: document.getElementById('qText'),
+  answers: document.getElementById('answers'),
+  hintBox: document.getElementById('hintBox'),
+  feedback: document.getElementById('feedback'),
+  info: document.getElementById('info'),
+  btnHint: document.getElementById('btnHint'),
+  btnRestart: document.getElementById('btnRestart'),
+  btnNext: document.getElementById('btnNext'),
+  goodCount: document.getElementById('goodCount'),
+  tryCount: document.getElementById('tryCount'),
+  goodFinal: document.getElementById('goodFinal'),
+  triesFinal: document.getElementById('triesFinal'),
+  totalQ: document.getElementById('totalQ'),
+  modeFinal: document.getElementById('modeFinal'),
+  mistakes: document.getElementById('mistakes'),
+  btnCopy: document.getElementById('btnCopy'),
+  btnBackHome: document.getElementById('btnBackHome'),
+  btnStartRev: document.getElementById('btnStartRev'),
+  btnStartEval: document.getElementById('btnStartEval'),
+  btnEnterFs: document.getElementById('btnEnterFs'),
+  btnExitFs: document.getElementById('btnExitFs')
+};
+
+let mode = null;
+let questions = [];
+let qIndex = 0;
+
+let goodFirstTry = 0;
+let totalTries = 0;
+
+let progressState = [];
+let currentTriesThisQ = 0;
+let lockedCorrect = false;
+
+let attemptLog = []; // logs wrong attempts only
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i=a.length-1;i>0;i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function renderProgress() {
+  els.progress.innerHTML = '';
+  for (let i=0;i<questions.length;i++) {
+    const d = document.createElement('div');
+    d.className = 'seg';
+    if (progressState[i]==='good') d.classList.add('good');
+    if (progressState[i]==='bad') d.classList.add('bad');
+    if (i===qIndex) d.classList.add('current');
+    els.progress.appendChild(d);
+  }
+}
+
+function resetPerQuestion() {
+  currentTriesThisQ = 0;
+  lockedCorrect = false;
+  els.btnNext.disabled = true;
+  els.feedback.style.display = 'none';
+  els.info.style.display = 'none';
+  els.hintBox.style.display = 'none';
+}
+
+function start(selectedMode) {
+  mode = selectedMode;
+  questions = DATA.modes[mode].map((qq, idx) => ({...qq, idx}));
+  qIndex = 0;
+  goodFirstTry = 0;
+  totalTries = 0;
+  progressState = Array(questions.length).fill(null);
+  attemptLog = [];
+
+  els.modeLabel.textContent = (mode === 'revision') ? 'Révision' : 'Évaluation';
+  els.hud.style.display = '';
+  els.progress.style.display = '';
+  els.start.style.display = 'none';
+  els.results.style.display = 'none';
+  els.quiz.style.display = '';
+  els.totalQ.textContent = String(questions.length);
+
+  renderProgress();
+  loadQuestion();
+  updateHud();
+}
+
+function updateHud() {
+  els.goodCount.textContent = String(goodFirstTry);
+  els.tryCount.textContent = String(totalTries);
+}
+
+function loadQuestion() {
+  resetPerQuestion();
+  const qq = questions[qIndex];
+  els.qNum.textContent = `Question ${qIndex+1} / ${questions.length}`;
+  els.qText.innerHTML = qq.q.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+
+  const packed = qq.choices.map((t,i)=>({t, i}));
+  const shuffled = shuffle(packed);
+  const map = shuffled.map(x=>x.i);
+
+  els.answers.innerHTML = '';
+  shuffled.forEach((item, displayIdx) => {
+    const btn = document.createElement('button');
+    btn.className = 'btn';
+    btn.innerHTML = item.t.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+    btn.addEventListener('click', () => handleAnswer(displayIdx, map));
+    els.answers.appendChild(btn);
+  });
+
+  els.btnHint.onclick = () => {
+    els.hintBox.textContent = qq.hint;
+    els.hintBox.style.display = '';
+  };
+
+  els.btnRestart.onclick = () => start(mode);
+  els.btnNext.onclick = () => nextQuestion();
+
+  renderProgress();
+}
+
+function handleAnswer(displayIdx, map) {
+  if (lockedCorrect) return;
+
+  const qq = questions[qIndex];
+  const originalIdx = map[displayIdx];
+
+  currentTriesThisQ += 1;
+  totalTries += 1;
+  updateHud();
+
+  const btns = Array.from(els.answers.querySelectorAll('button'));
+  btns.forEach(b => b.classList.remove('good','bad'));
+  const selectedBtn = btns[displayIdx];
+
+  const fbText = qq.fb[originalIdx];
+  els.feedback.innerHTML = fbText;
+  els.feedback.style.display = '';
+
+  if (originalIdx === qq.correct) {
+    lockedCorrect = true;
+
+    if (currentTriesThisQ === 1) {
+      goodFirstTry += 1;
+      progressState[qIndex] = 'good';
+    } else {
+      progressState[qIndex] = 'bad';
+    }
+
+    selectedBtn.classList.add('good');
+    els.info.innerHTML = `<b>À retenir :</b> ${qq.info}`;
+    els.info.style.display = '';
+    els.btnNext.disabled = false;
+
+  } else {
+    selectedBtn.classList.add('bad');
+    attemptLog.push({
+      index: qIndex,
+      chosenText: qq.choices[originalIdx],
+      feedbackText: fbText
+    });
+  }
+
+  renderProgress();
+}
+
+function nextQuestion() {
+  if (!lockedCorrect) return;
+  qIndex += 1;
+  if (qIndex >= questions.length) finish();
+  else loadQuestion();
+}
+
+function stripMd(s) {
+  return String(s).replace(/\*\*(.*?)\*\*/g, '$1').replace(/<[^>]+>/g, '');
+}
+
+function finish() {
+  els.quiz.style.display = 'none';
+  els.results.style.display = '';
+  els.goodFinal.textContent = String(goodFirstTry);
+  els.triesFinal.textContent = String(totalTries);
+  els.modeFinal.textContent = (mode === 'revision') ? 'Révision' : 'Évaluation';
+
+  const wrongCounts = {};
+  attemptLog.forEach(a => wrongCounts[a.index] = (wrongCounts[a.index]||0) + 1);
+
+  els.mistakes.innerHTML = '';
+  if (attemptLog.length === 0) {
+    const div = document.createElement('div');
+    div.className = 'mistake';
+    div.innerHTML = `<div class="qt">Aucune tentative erronée 🎉</div><div class="lines">Tu as tout réussi du premier coup. Excellent travail!</div>`;
+    els.mistakes.appendChild(div);
+  } else {
+    const grouped = new Map();
+    attemptLog.forEach(a => {
+      if (!grouped.has(a.index)) grouped.set(a.index, []);
+      grouped.get(a.index).push(a);
+    });
+
+    Array.from(grouped.entries()).sort((a,b)=>a[0]-b[0]).forEach(([idx, arr]) => {
+      const qq = questions[idx];
+      const tries = (wrongCounts[idx]||0) + 1;
+
+      const div = document.createElement('div');
+      div.className = 'mistake';
+
+      const qtxt = qq.q.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+      const lines = arr.map((x, k) => {
+        const chosen = x.chosenText.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+        return `<div class="lines"><b>Choix ${k+1} :</b> ${chosen}<br>${x.feedbackText}</div>`;
+      }).join('<hr style="border:none;border-top:1px solid rgba(15,23,42,.10);margin:10px 0;">');
+
+      const correct = qq.choices[qq.correct].replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+      div.innerHTML = `
+        <div class="meta">Question ${idx+1} • Tentatives : <b>${tries}</b></div>
+        <div class="qt">${qtxt}</div>
+        ${lines}
+        <hr style="border:none;border-top:1px solid rgba(15,23,42,.10);margin:10px 0;">
+        <div class="lines"><b>Bonne réponse :</b> ${correct}</div>
+        <div class="lines" style="margin-top:6px;"><b>À retenir :</b> ${qq.info}</div>
+      `;
+      els.mistakes.appendChild(div);
+    });
+  }
+
+  els.btnCopy.onclick = async () => {
+    const report = buildReportText();
+    try {
+      await navigator.clipboard.writeText(report);
+      els.btnCopy.textContent = "✅ Rapport copié";
+      setTimeout(()=>els.btnCopy.textContent="Copier le rapport", 1400);
+    } catch(e) {
+      alert("Impossible de copier automatiquement. Sélectionne et copie manuellement.\n\n" + report);
+    }
+  };
+
+  els.btnBackHome.onclick = () => {
+    els.results.style.display = 'none';
+    els.hud.style.display = 'none';
+    els.progress.style.display = 'none';
+    els.start.style.display = '';
+  };
+}
+
+function buildReportText() {
+  const modeName = (mode === 'revision') ? 'Révision' : 'Évaluation';
+  let txt = `Mission Cercle : Opération π — Résultats
+`;
+  txt += `Mode : ${modeName}
+`;
+  txt += `Bonnes réponses : ${goodFirstTry}/${questions.length} (du premier coup)
+`;
+  txt += `Tentatives : ${totalTries}
+
+`;
+
+  if (attemptLog.length === 0) {
+    txt += "Aucune tentative erronée.\n";
+    return txt;
+  }
+
+  const grouped = new Map();
+  attemptLog.forEach(a => {
+    if (!grouped.has(a.index)) grouped.set(a.index, []);
+    grouped.get(a.index).push(a);
+  });
+
+  txt += "Rétroactions (tentatives non réussies du premier coup) :\n\n";
+  Array.from(grouped.entries()).sort((a,b)=>a[0]-b[0]).forEach(([idx, arr]) => {
+    const qq = questions[idx];
+    txt += `Question ${idx+1}
+`;
+    txt += `Q : ${stripMd(qq.q)}
+`;
+    arr.forEach((x,k) => {
+      txt += `  Choix ${k+1} : ${stripMd(x.chosenText)}
+`;
+      txt += `  ${stripMd(x.feedbackText)}
+`;
+    });
+    txt += `  Bonne réponse : ${stripMd(qq.choices[qq.correct])}
+`;
+    txt += `  À retenir : ${stripMd(qq.info)}
+
+`;
+  });
+
+  return txt;
+}
+
+// Start buttons
+els.btnStartRev.onclick = ()=>start('revision');
+els.btnStartEval.onclick = ()=>start('evaluation');
+
+// Fullscreen
+function isFs() { return !!document.fullscreenElement; }
+els.btnEnterFs.onclick = async () => {
+  try { await document.documentElement.requestFullscreen(); }
+  catch(e) { alert("Le plein écran n'est pas disponible dans ce navigateur."); }
+};
+els.btnExitFs.onclick = async () => {
+  try { await document.exitFullscreen(); } catch(e) {}
+};
+document.addEventListener('fullscreenchange', () => {
+  if (isFs()) {
+    els.btnEnterFs.style.display = 'none';
+    els.btnExitFs.style.display = '';
+  } else {
+    els.btnEnterFs.style.display = '';
+    els.btnExitFs.style.display = 'none';
+  }
+});
+</script>
+</body>
+</html>
